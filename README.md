@@ -15,19 +15,26 @@ This project implements a Transformer model for forecasting XAUUSD (Gold/USD) pr
    ```
 
 3. **Prepare Data**:
-   - Obtain XAUUSD OHLCV data and USD Index data (e.g., from Yahoo Finance or MetaTrader).
-   - Compute features: Open, High, Low, Close, Volume, SMA, RSI, MACD, Bollinger Band Width, USD Index.
-   - Normalize features using MinMaxScaler.
+   - Run the data preparation script to fetch XAUUSD and USD Index data, compute features, and save to CSV:
+     ```bash
+     python data_preparation.py --start-date 2020-01-01 --end-date 2025-07-22 --interval 1d
+     ```
+   - Features: Open, High, Low, Close, Volume, SMA, RSI, MACD, Bollinger Band Width, USD Index.
+   - Output: `xauusd_features.csv` (normalized data saved in the project directory).
+   - Use `--force` to regenerate the CSV if it exists.
 
 4. **Run the Model**:
    ```python
    import torch
+   import numpy as np
    from transformer import Transformer
 
+   # Load prepared data
+   data = np.loadtxt('xauusd_features.csv', delimiter=',', skiprows=1)
    model = Transformer(d_model=64, ffn_hidden=256, num_heads=4, drop_prob=0.1, num_layers=2, max_sequence_length=100, forecast_horizon=10)
-   model.to(get_device())
-   x = torch.tensor(feature_data_normalized[:100], dtype=torch.float32).unsqueeze(0)  # Shape: (1, 100, 10)
-   y = torch.tensor(feature_data_normalized[100:110, 3:4], dtype=torch.float32).unsqueeze(0)  # Predict Close
+   model.to(model.get_device())
+   x = torch.tensor(data[:100], dtype=torch.float32).unsqueeze(0)  # Shape: (1, 100, 10)
+   y = torch.tensor(data[100:110, 3:4], dtype=torch.float32).unsqueeze(0)  # Predict Close
    output = model(x, y)
    ```
 
@@ -37,8 +44,9 @@ This project implements a Transformer model for forecasting XAUUSD (Gold/USD) pr
 - pandas
 - scikit-learn
 - ta
+- yfinance
 
 ## Notes
-- The  parameter is adjustable for variable input sequence lengths.
+- The `max_sequence_length` parameter is adjustable for variable input sequence lengths.
 - The model predicts the closing price for the specified forecast horizon.
 - Use Git to track changes and create feature branches for modifications.
