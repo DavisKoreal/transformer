@@ -32,7 +32,8 @@ def load_data(file_path: str, max_sequence_length: int, forecast_horizon: int) -
         raise FileNotFoundError(f"Please run data_preparation.py to generate {file_path}")
 
     try:
-        data = pd.read_csv(file_path, index_col=0).values  # Shape: (num_timesteps, 10)
+        # Load CSV with date index
+        data = pd.read_csv(file_path, index_col=0).astype(np.float64).values  # Shape: (num_timesteps, 10)
         logging.info(f"Loaded data with shape: {data.shape}")
     except Exception as e:
         logging.error(f"Failed to load CSV: {e}")
