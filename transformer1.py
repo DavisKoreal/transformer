@@ -664,3 +664,6 @@ class Transformer(nn.Module):
         out = self.decoder(x, y, decoder_self_attention_mask, decoder_cross_attention_mask, start_token=dec_start_token, end_token=dec_end_token)
         out = self.linear(out)
         return out
+
+
+        
