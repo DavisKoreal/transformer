@@ -24,16 +24,23 @@ def load_data(file_path: str, max_sequence_length: int, forecast_horizon: int) -
 
     Raises:
         FileNotFoundError: If xauusd_features.csv is missing.
-        ValueError: If data is insufficient or has incorrect shape.
+        ValueError: If data is insufficient, has incorrect columns, or contains non-numeric values.
     """
     file_path = Path(file_path)
     if not file_path.exists():
         logging.error(f"Data file {file_path} not found")
         raise FileNotFoundError(f"Please run data_preparation.py to generate {file_path}")
 
+    expected_columns = ['Open', 'High', 'Low', 'Close', 'Volume', 'SMA', 'RSI', 'MACD', 'BB_Width', 'USD_Index']
     try:
-        # Load CSV with date index
-        data = pd.read_csv(file_path, index_col=0).astype(np.float64).values  # Shape: (num_timesteps, 10)
+        # Load CSV with date index and select expected columns
+        data = pd.read_csv(file_path, index_col=0)
+        # Verify all expected columns are present
+        if not all(col in data.columns for col in expected_columns):
+            missing = [col for col in expected_columns if col not in data.columns]
+            logging.error(f"Missing columns in CSV: {missing}")
+            raise ValueError(f"CSV must contain columns: {expected_columns}")
+        data = data[expected_columns].astype(np.float64).values  # Shape: (num_timesteps, 10)
         logging.info(f"Loaded data with shape: {data.shape}")
     except Exception as e:
         logging.error(f"Failed to load CSV: {e}")
@@ -48,7 +55,7 @@ def load_data(file_path: str, max_sequence_length: int, forecast_horizon: int) -
         raise ValueError("Insufficient data for sequence length and forecast horizon")
 
     # Split into train (80%) and test (20%)
-    train_size = int(0.8 * data.shape[0])
+    train_size = int(0.8 * data.shape[0])  # Corrected line
     train_data = data[:train_size]
     test_data = data[train_size - max_sequence_length:]  # Include overlap for sequences
     logging.info(f"Train data shape: {train_data.shape}, Test data shape: {test_data.shape}")
