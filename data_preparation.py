@@ -56,9 +56,9 @@ class DataPreparation:
         """
         try:
             logging.info("Fetching XAUUSD data...")
-            xauusd: pd.DataFrame = yf.download('GC=F', start=start_date, end=end_date, interval=interval)
+            xauusd: pd.DataFrame = yf.download('GC=F', start=start_date, end=end_date, interval=interval, auto_adjust=False)
             logging.info("Fetching USD Index data...")
-            usd_index: pd.DataFrame = yf.download('DX-Y.NYB', start=start_date, end=end_date, interval=interval)
+            usd_index: pd.DataFrame = yf.download('DX-Y.NYB', start=start_date, end=end_date, interval=interval, auto_adjust=False)
             
             if xauusd.empty or usd_index.empty:
                 logging.error("Failed to fetch data: empty DataFrame returned")
@@ -89,12 +89,15 @@ class DataPreparation:
         data: pd.DataFrame = xauusd[['Open', 'High', 'Low', 'Close', 'Volume']].copy()
         data['USD_Index'] = usd_index['Close']
         
+        # Ensure Close is a Series
+        close_series: pd.Series = data['Close'].squeeze()
+        
         # Compute technical indicators
         logging.info("Computing technical indicators...")
-        data['SMA'] = SMAIndicator(data['Close'], window=10).sma_indicator()
-        data['RSI'] = RSIIndicator(data['Close'], window=14).rsi()
-        data['MACD'] = MACD(data['Close']).macd()
-        bb: BollingerBands = BollingerBands(data['Close'], window=20)
+        data['SMA'] = SMAIndicator(close_series, window=10).sma_indicator()
+        data['RSI'] = RSIIndicator(close_series, window=14).rsi()
+        data['MACD'] = MACD(close_series).macd()
+        bb: BollingerBands = BollingerBands(close_series, window=20)
         data['BB_Width'] = (bb.bollinger_hband() - bb.bollinger_lband()) / bb.bollinger_mavg()
         
         # Drop rows with NaN values
